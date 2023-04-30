@@ -80,6 +80,10 @@ if __name__ == '__main__':
     if ical_url is None or len(ical_url) <= 0:
         raise Exception("No ICAL_URL in environment!")
 
+    chat_id = os.getenv('CHAT_ID')
+    if chat_id is None or len(chat_id) <= 0:
+        raise Exception("No CHAT_ID in environment!")
+
     application = ApplicationBuilder().token(bot_token).build()
 
     start_handler = CommandHandler('start', start)
