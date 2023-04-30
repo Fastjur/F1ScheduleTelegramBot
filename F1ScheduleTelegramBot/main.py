@@ -25,6 +25,7 @@ logging.basicConfig(
 
 CHECK_INTERVAL = datetime.timedelta(seconds=30)
 NOTIFICATIONS = [
+    {'delta': datetime.timedelta(minutes=60), 'message': "%s will start in about one hour!"},
     {'delta': datetime.timedelta(minutes=15), 'message': "%s will start in 15 minutes."},
     # {'delta': datetime.timedelta(minutes=2), 'message': "%s will start in 2 minutes."},
     {'delta': datetime.timedelta(minutes=1), 'message': "%s is about to start!"}
