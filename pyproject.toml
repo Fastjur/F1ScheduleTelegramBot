@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "f1 schedule telegram bot"
+version = "0.1.0"
+description = "Telegram bot to notify telegram users, groups and channels of upcoming F1 events."
+authors = ["Jurriaan Den Toonder <jurriaan@toonder.dev>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "F1ScheduleTelegramBot" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+python-dotenv = "^1.0.0"
+python-telegram-bot = {extras = ["job-queue"], version = "^20.2"}
+requests = "^2.29.0"
+ics = "^0.7.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
