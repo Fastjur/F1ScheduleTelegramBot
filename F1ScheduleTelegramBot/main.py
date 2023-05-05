@@ -94,6 +94,21 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
             )
 
 
+async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id_dev = os.getenv('CHAT_ID_DEV')
+    if update.effective_message.chat_id != chat_id_dev:
+        return
+
+    message = "Scheduled jobs: \n"
+    for job in context.job_queue.jobs():
+        message += "{}:{}\n".format(job.next_t.strftime("%-d %b, %H:%M:%S"), job.data.name)
+
+    await context.bot.send_message(
+        chat_id=chat_id_dev,
+        text=message,
+    )
+
+
 def main():
     bot_token = os.getenv('BOT_TOKEN')
     if bot_token is None or len(bot_token) <= 0:
@@ -106,7 +121,10 @@ def main():
     application = ApplicationBuilder().token(bot_token).build()
 
     start_handler = CommandHandler('start', start)
+    schedule_handler = CommandHandler('schedule', list_schedule)
+
     application.add_handler(start_handler)
+    application.add_handler(schedule_handler)
 
     job_queue = application.job_queue
     job_queue.run_repeating(sync_ical, interval=CHECK_INTERVAL, first=1)
