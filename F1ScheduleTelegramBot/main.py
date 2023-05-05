@@ -130,7 +130,7 @@ def main():
     application.add_handler(start_handler)
 
     job_queue = application.job_queue
-    job_queue.run_repeating(sync_ical, interval=60, first=1)
+    job_queue.run_repeating(sync_ical, interval=datetime.timedelta(minutes=60), first=1)
 
     application.run_polling()
 
