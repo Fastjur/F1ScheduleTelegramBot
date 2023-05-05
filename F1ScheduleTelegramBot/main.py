@@ -98,7 +98,10 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.info("Received schedule command from user: {}".format(update.effective_chat.id))
     chat_id_dev = int(os.getenv('CHAT_ID_DEV'))
-    logging.debug("Chat id dev: {} equals user chat_id: {}".format(chat_id_dev, update.effective_chat.id == chat_id_dev))
+    logging.debug("Chat id dev: {} equals user chat_id: {}".format(
+        chat_id_dev,
+        update.effective_chat.id == chat_id_dev)
+    )
     if update.effective_message.chat_id != chat_id_dev:
         return
 
