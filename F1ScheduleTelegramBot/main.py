@@ -32,14 +32,6 @@ NOTIFICATIONS = [
 ]
 
 
-async def main():
-    bot = telegram.Bot(bot_token)
-    async with bot:
-        print(await bot.get_me())
-        print((await bot.get_updates())[0])
-        await bot.send_message(text='Hi John!', chat_id=1687550897)
-
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -49,7 +41,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def update_callback(context: ContextTypes.DEFAULT_TYPE):
-    ical_url = os.getenv('ICAL_URL')
+    ical_url = "https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics"
 
     # Get the F1 calendar
     cal = Calendar(requests.get(ical_url).text)
@@ -72,14 +64,10 @@ async def update_callback(context: ContextTypes.DEFAULT_TYPE):
                 )
 
 
-if __name__ == '__main__':
+def main():
     bot_token = os.getenv('BOT_TOKEN')
     if bot_token is None or len(bot_token) <= 0:
         raise Exception("No BOT_TOKEN in environment!")
-
-    ical_url = os.getenv('ICAL_URL')
-    if ical_url is None or len(ical_url) <= 0:
-        raise Exception("No ICAL_URL in environment!")
 
     chat_id = os.getenv('CHAT_ID')
     if chat_id is None or len(chat_id) <= 0:
@@ -94,3 +82,7 @@ if __name__ == '__main__':
     job_every_second = job_queue.run_repeating(update_callback, interval=CHECK_INTERVAL, first=1)
 
     application.run_polling()
+
+
+if __name__ == '__main__':
+    main()

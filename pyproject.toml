@@ -8,6 +8,7 @@ readme = "README.md"
 packages = [
     { include = "F1ScheduleTelegramBot" },
 ]
+repository = "https://github.com/Fastjur/F1ScheduleTelegramBot"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -20,3 +21,9 @@ ics = "^0.7.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+main = "F1ScheduleTelegramBot.main:main"
+
+[tool.poetry.urls]
+issues = "https://github.com/Fastjur/F1ScheduleTelegramBot/issues"
