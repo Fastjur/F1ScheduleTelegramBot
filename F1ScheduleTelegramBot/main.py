@@ -67,20 +67,31 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
 
     chat_id = os.getenv('CHAT_ID')
 
+    utcnow = arrow.utcnow()
     for event in cal.events:
-        if event.begin > arrow.utcnow() and \
-                event.begin - arrow.utcnow().shift(weeks=+1) > arrow.utcnow():
+        # First, check if the event is in the next 7 days
+        if utcnow <= event.begin <= event.begin.shift(days=7):
             # For now reschedule all events
             remove_job_if_exists(event.uid, context)
-            context.job_queue.run_once(send_notifications,
-                                       (event.begin - arrow.utcnow().shift(minutes=+60)).seconds,
-                                       chat_id=chat_id, name=event.uid, data=event)
-            context.job_queue.run_once(send_notifications,
-                                       (event.begin - arrow.utcnow().shift(minutes=+15)).seconds,
-                                       chat_id=chat_id, name=event.uid, data=event)
-            context.job_queue.run_once(send_notifications,
-                                       (event.begin - arrow.utcnow().shift(minutes=+1)).seconds,
-                                       chat_id=chat_id, name=event.uid, data=event)
+            context.job_queue.run_once(
+                send_notifications,
+                event.begin.shift(minutes=-60).seconds,
+                chat_id=chat_id,
+                name=event.uid,
+                data=event
+            )
+            context.job_queue.run_once(
+                send_notifications,
+                event.begin.shift(minutes=-15).seconds,
+                chat_id=chat_id,
+                name=event.uid,
+                data=event
+            )
+            context.job_queue.run_once(
+                send_notifications,
+                event.begin.shift(minutes=-1).seconds,
+                chat_id=chat_id, name=event.uid, data=event
+            )
 
 
 def main():
