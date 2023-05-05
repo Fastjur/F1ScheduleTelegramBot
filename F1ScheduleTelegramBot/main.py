@@ -29,7 +29,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text="Hello! I am F1ScheduleTelegramBot! I am currently mostly hardcoded, but more "
-             "features will be coming soon! Your chat id is: `%s`." % update.effective_chat.id,
+             "features will be coming soon! Your chat id is: `{}`".format(update.effective_chat.id),
     )
 
 
@@ -37,7 +37,7 @@ async def send_notifications(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
     event = job.data
     chat_id = job.chat_id
-    message = "%s will begin %s" % event.name, event.begin.humanize()
+    message = "{} will begin {}".format(event.name, event.begin.humanize())
     await context.bot.send_message(
         chat_id=chat_id,
         text=message,
@@ -94,6 +94,21 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
             )
 
 
+async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id_dev = os.getenv('CHAT_ID_DEV')
+    if update.effective_message.chat_id != chat_id_dev:
+        return
+
+    message = "Scheduled jobs: \n"
+    for job in context.job_queue.jobs():
+        message += "{}:{}\n".format(job.next_t.strftime("%-d %b, %H:%M:%S"), job.data.name)
+
+    await context.bot.send_message(
+        chat_id=chat_id_dev,
+        text=message,
+    )
+
+
 def main():
     bot_token = os.getenv('BOT_TOKEN')
     if bot_token is None or len(bot_token) <= 0:
@@ -106,7 +121,10 @@ def main():
     application = ApplicationBuilder().token(bot_token).build()
 
     start_handler = CommandHandler('start', start)
+    schedule_handler = CommandHandler('schedule', list_schedule)
+
     application.add_handler(start_handler)
+    application.add_handler(schedule_handler)
 
     job_queue = application.job_queue
     job_queue.run_repeating(sync_ical, interval=CHECK_INTERVAL, first=1)
