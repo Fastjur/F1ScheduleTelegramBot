@@ -2,12 +2,11 @@ import datetime
 import logging
 import os
 import requests
-import telegram
 
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
-from ics import Calendar, Event
+from ics import Calendar
 
 """
 Load .env variables
@@ -35,13 +34,14 @@ NOTIFICATIONS = [
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
-        text="Hello! I am F1ScheduleTelegramBot! I am currently mostly hardcoded, but more features will be coming "
-             "soon! Your chat id is: `%s`." % update.effective_chat.id,
+        text="Hello! I am F1ScheduleTelegramBot! I am currently mostly hardcoded, but more "
+             "features will be coming soon! Your chat id is: `%s`." % update.effective_chat.id,
     )
 
 
 async def update_callback(context: ContextTypes.DEFAULT_TYPE):
-    ical_url = "https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics"
+    ical_url = "https://files-f1.motorsportcalendars.com/f1" \
+               "-calendar_p1_p2_p3_qualifying_sprint_gp.ics"
 
     # Get the F1 calendar
     cal = Calendar(requests.get(ical_url).text)
@@ -53,7 +53,12 @@ async def update_callback(context: ContextTypes.DEFAULT_TYPE):
         for event in cal.events:
             event_begin_timedelta = event.begin - notification['delta'] - 0.5 * CHECK_INTERVAL
             event_end_timedelta = event.begin - notification['delta'] + 0.5 * CHECK_INTERVAL
-            logging.debug("[%s]: %s -- %s - %s" % (event.name, notification['message'], event_begin_timedelta, event_end_timedelta))
+            logging.debug("[%s]: %s -- %s - %s" % (
+                event.name,
+                notification['message'],
+                event_begin_timedelta,
+                event_end_timedelta)
+            )
             if event_begin_timedelta < now < event_end_timedelta:
                 logging.info("Event in notification window!")
                 message = notification['message'] % event.name
@@ -79,7 +84,7 @@ def main():
     application.add_handler(start_handler)
 
     job_queue = application.job_queue
-    job_every_second = job_queue.run_repeating(update_callback, interval=CHECK_INTERVAL, first=1)
+    job_queue.run_repeating(update_callback, interval=CHECK_INTERVAL, first=1)
 
     application.run_polling()
 

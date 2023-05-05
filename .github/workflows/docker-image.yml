@@ -34,10 +34,10 @@ jobs:
           python-version: 3.9
 
       - name: Install python poetry
-        uses: abatilo/actions-poetry@v2.1.6
+        run: pip install poetry
 
       - name: Install poetry dev dependencies
-        run: poetry install --with dev
+        run: poetry install --only dev
 
       - name: Run pylama
         run: poetry run pylama
