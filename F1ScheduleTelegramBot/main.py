@@ -70,26 +70,26 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
     utcnow = arrow.utcnow()
     for event in cal.events:
         # First, check if the event is in the next 7 days
-        if utcnow <= event.begin <= event.begin.shift(days=7):
+        if utcnow <= event.begin <= utcnow.shift(days=7):
             # For now reschedule all events
             remove_job_if_exists(event.uid, context)
             context.job_queue.run_once(
                 send_notifications,
-                event.begin.shift(minutes=-60).seconds,
+                event.begin.shift(minutes=-60).datetime,
                 chat_id=chat_id,
                 name=event.uid,
                 data=event
             )
             context.job_queue.run_once(
                 send_notifications,
-                event.begin.shift(minutes=-15).seconds,
+                event.begin.shift(minutes=-15).datetime,
                 chat_id=chat_id,
                 name=event.uid,
                 data=event
             )
             context.job_queue.run_once(
                 send_notifications,
-                event.begin.shift(minutes=-1).seconds,
+                event.begin.shift(minutes=-1).datetime,
                 chat_id=chat_id, name=event.uid, data=event
             )
 
