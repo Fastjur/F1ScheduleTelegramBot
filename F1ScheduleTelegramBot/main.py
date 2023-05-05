@@ -29,7 +29,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text="Hello! I am F1ScheduleTelegramBot! I am currently mostly hardcoded, but more "
-             "features will be coming soon! Your chat id is: `%s`." % update.effective_chat.id,
+             "features will be coming soon! Your chat id is: `{}`".format(update.effective_chat.id),
     )
 
 
@@ -37,7 +37,7 @@ async def send_notifications(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
     event = job.data
     chat_id = job.chat_id
-    message = "%s will begin %s" % event.name, event.begin.humanize()
+    message = "{} will begin {}".format(event.name, event.begin.humanize())
     await context.bot.send_message(
         chat_id=chat_id,
         text=message,
