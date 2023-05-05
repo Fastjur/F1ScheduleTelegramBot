@@ -18,6 +18,9 @@ requests = "^2.29.0"
 ics = "^0.7.2"
 
 
+[tool.poetry.group.dev.dependencies]
+pylama = {extras = ["toml"], version = "^8.4.1"}
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

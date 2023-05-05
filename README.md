@@ -39,6 +39,14 @@ poetry run main
 ```
 This will run the main script, which will start the bot.
 
+## Contributing
+If you want to use the git hooks, you can enable them using the following command:
+    
+ ```shell
+ git config core.hooksPath .githooks
+ ```
+
+This will enable all the hooks in the `.githooks` directory.
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
