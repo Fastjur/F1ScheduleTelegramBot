@@ -16,6 +16,7 @@ python-dotenv = "^1.0.0"
 python-telegram-bot = {extras = ["job-queue"], version = "^20.2"}
 requests = "^2.29.0"
 ics = "^0.7.2"
+arrow = "^1.2.3"
 
 
 [tool.poetry.group.dev.dependencies]

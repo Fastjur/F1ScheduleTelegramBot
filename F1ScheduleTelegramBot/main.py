@@ -1,18 +1,18 @@
 import datetime
 import logging
 import os
-import requests
 
+import arrow
+import requests
 from dotenv import load_dotenv
+from ics import Calendar
 from telegram import Update
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
-from ics import Calendar
 
 """
 Load .env variables
 """
 load_dotenv()
-
 
 """
 Setup logger
@@ -69,6 +69,52 @@ async def update_callback(context: ContextTypes.DEFAULT_TYPE):
                 )
 
 
+async def send_notifications(context: ContextTypes.DEFAULT_TYPE):
+    job = context.job
+    event = job.data
+    chat_id = job.chat_id
+    message = "%s will begin %s" % event.name, event.begin.humanize()
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text=message,
+    )
+
+
+def remove_job_if_exists(name: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Remove job with given name. Returns whether job was removed."""
+
+    current_jobs = context.job_queue.get_jobs_by_name(name)
+
+    if not current_jobs:
+        return False
+
+    for job in current_jobs:
+        job.schedule_removal()
+
+    return True
+
+
+async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
+    ical_url = "https://files-f1.motorsportcalendars.com/f1" \
+               "-calendar_p1_p2_p3_qualifying_sprint_gp.ics"
+
+    # Get the F1 calendar
+    cal = Calendar(requests.get(ical_url).text)
+
+    chat_id = os.getenv('CHAT_ID')
+
+    for event in cal.events:
+        if event.begin > arrow.utcnow() and event.begin - arrow.utcnow().shift(weeks=+1) > arrow.utcnow():
+            # For now reschedule all events
+            remove_job_if_exists(event.name, context)
+            context.job_queue.run_once(send_notifications, (event.begin - arrow.utcnow().shift(minutes=+60)).seconds,
+                                       chat_id=chat_id, name=event.name, data=event)
+            context.job_queue.run_once(send_notifications, (event.begin - arrow.utcnow().shift(minutes=+15)).seconds,
+                                       chat_id=chat_id, name=event.name, data=event)
+            context.job_queue.run_once(send_notifications, (event.begin - arrow.utcnow().shift(minutes=+1)).seconds,
+                                       chat_id=chat_id, name=event.name, data=event)
+
+
 def main():
     bot_token = os.getenv('BOT_TOKEN')
     if bot_token is None or len(bot_token) <= 0:
@@ -84,7 +130,7 @@ def main():
     application.add_handler(start_handler)
 
     job_queue = application.job_queue
-    job_queue.run_repeating(update_callback, interval=CHECK_INTERVAL, first=1)
+    job_queue.run_repeating(sync_ical, interval=60, first=1)
 
     application.run_polling()
 
