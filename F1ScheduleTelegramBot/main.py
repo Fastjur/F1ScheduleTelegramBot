@@ -26,6 +26,7 @@ CHECK_INTERVAL = datetime.timedelta(minutes=60)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.info("Received start command from user: {}".format(update.effective_chat.id))
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text="Hello! I am F1ScheduleTelegramBot! I am currently mostly hardcoded, but more "
@@ -95,13 +96,16 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id_dev = os.getenv('CHAT_ID_DEV')
+    logging.info("Received schedule command from user: {}".format(update.effective_chat.id))
+    chat_id_dev = int(os.getenv('CHAT_ID_DEV'))
+    logging.debug("Chat id dev: {} equals user chat_id: {}".format(chat_id_dev, update.effective_chat.id == chat_id_dev))
     if update.effective_message.chat_id != chat_id_dev:
         return
 
     message = "Scheduled jobs: \n"
     for job in context.job_queue.jobs():
-        message += "{}:{}\n".format(job.next_t.strftime("%-d %b, %H:%M:%S"), job.data.name)
+        job_name = job.data and job.data.name or job.name or 'unknown job name'
+        message += "{}: {}\n".format(job.next_t.strftime("%-d %b, %H:%M:%S"), job_name)
 
     await context.bot.send_message(
         chat_id=chat_id_dev,
@@ -127,7 +131,7 @@ def main():
     application.add_handler(schedule_handler)
 
     job_queue = application.job_queue
-    job_queue.run_repeating(sync_ical, interval=CHECK_INTERVAL, first=1)
+    job_queue.run_repeating(sync_ical, interval=CHECK_INTERVAL, first=1, name="sync_ical")
 
     application.run_polling()
 
