@@ -9,7 +9,7 @@ from ics import Calendar
 from telegram import Update
 import telegram
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
-from consts import DEV_CHAT_NAME, CHECK_INTERVAL, EMOJI_CHEQUERED_FLAG, EMOJI_RED_FLAG
+from consts import DEV_CHAT_NAME, CHECK_INTERVAL
 import database
 
 """
@@ -48,9 +48,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         database.get_chat(dbconn, chat_id)
         await context.bot.send_message(
             chat_id=chat_id,
-            text="Your chat has already been registered! {}{}{}".format(EMOJI_RED_FLAG,
-                                                                        EMOJI_RED_FLAG,
-                                                                        EMOJI_RED_FLAG),
+            text="Your chat has already been registered! 🚩🚩🚩",
         )
         return
     except Exception:
@@ -67,7 +65,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id=chat_id,
         text="Hello! I am F1ScheduleTelegramBot. I am currently mostly hardcoded, but more "
              "features will be coming soon!\n\n"
-             "Your chat has been registered successfully {}".format(EMOJI_CHEQUERED_FLAG),
+             "Your chat has been registered successfully 🏁",
     )
 
 
