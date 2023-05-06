@@ -133,7 +133,7 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logging.info("Received schedule command from user: {}".format(update.effective_chat.id))
+    logging.info("Received schedule command from chat_id: {}".format(update.effective_chat.id))
 
     chat_dev = database.get_chat_dev(dbconn)
 
@@ -156,7 +156,7 @@ async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 
 async def list_chats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    logging.info("Received chats command from user: {}".format(update.effective_chat.id))
+    logging.info("Received chats command from chat_id: {}".format(update.effective_chat.id))
 
     chat_dev = database.get_chat_dev(dbconn)
 
