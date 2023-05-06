@@ -1,4 +1,3 @@
-import datetime
 import logging
 import os
 import sqlite3
@@ -9,6 +8,8 @@ from dotenv import load_dotenv
 from ics import Calendar
 from telegram import Update
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
+from consts import DEV_CHAT_NAME, CHECK_INTERVAL
+import database
 
 """
 Load .env variables
@@ -23,8 +24,6 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-CHECK_INTERVAL = datetime.timedelta(minutes=60)
-DEV_CHAT_NAME = "DEV"
 
 dbconn = sqlite3.connect('f1.db')
 
@@ -70,7 +69,7 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
     # Get the F1 calendar
     cal = Calendar(requests.get(ical_url).text)
 
-    chats = list_chats()
+    chats = database.list_chats(dbconn)
     if len(chats) != 1:
         raise Exception("Expected only 1 non-dev chat to exist")
 
@@ -106,7 +105,7 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.info("Received schedule command from user: {}".format(update.effective_chat.id))
 
-    chat_dev = get_chat_dev()
+    chat_dev = database.get_chat_dev(dbconn)
 
     logging.debug("Chat id dev: {} equals user chat_id: {}".format(
         chat_dev[1],
@@ -126,35 +125,14 @@ async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     )
 
 
-# Retrieves all non-dev chats from the database
-def list_chats():
-    cur = dbconn.cursor()
-    res = cur.execute("SELECT name, chat_id FROM chats WHERE name!=:name", {"name": DEV_CHAT_NAME})
-    rows = res.fetchall()
-    cur.close()
-    return rows
-
-
-# Retrieves the dev chat from the database
-def get_chat_dev():
-    cur = dbconn.cursor()
-    res = cur.execute("SELECT name, chat_id FROM chats WHERE name=:name", {"name": DEV_CHAT_NAME})
-    rows = res.fetchall()
-    if len(rows) == 0:
-        raise Exception("DEV chat id does not exist in database")
-
-    return rows[0]
-
-
 def main():
+    # Read all env variables
     bot_token = os.getenv('BOT_TOKEN')
     if bot_token is None or len(bot_token) <= 0:
         raise Exception("No BOT_TOKEN in environment!")
-
     chat_id = os.getenv('CHAT_ID')
     if chat_id is None or len(chat_id) <= 0:
         raise Exception("No CHAT_ID in environment!")
-
     chat_id_dev = os.getenv('CHAT_ID_DEV')
     if chat_id_dev is None or len(chat_id_dev) <= 0:
         raise Exception("No CHAT_ID_DEV in environment!")
@@ -164,15 +142,18 @@ def main():
 
     # Check whether the DEV chatID exists within the DATABASE, if not, create it
     try:
-        get_chat_dev()
+        database.get_chat_dev(dbconn)
     except Exception as e:
         print(e)
         cur.execute("INSERT INTO chats VALUES (:name, :chat_id)",
                     {"name": DEV_CHAT_NAME, "chat_id": chat_id_dev})
         dbconn.commit()
 
-    # Check whether the chatID exists within the DATABASE, if not, create it
-    chats = list_chats()
+    # Check whether a chatID exists within the DATABASE, if not, create it
+    #
+    # TODO: this should be removed later, since users should be able to add
+    # the bot to the chat, which we should be able to handle without issue.
+    chats = database.list_chats(dbconn)
     if len(chats) == 0:
         cur.execute("INSERT INTO chats VALUES (:name, :chat_id)",
                     {"name": "CHAT", "chat_id": chat_id})
