@@ -40,8 +40,14 @@ poetry run main
 This will run the main script, which will start the bot.
 
 ## Contributing
-If you want to use the git hooks, you can enable them using the following command:
-    
+If you want to use the git hooks, you need to install pylama first:
+
+``` shell
+pip install pylama
+```
+
+After that you can enable the githooks using the following command:
+
  ```shell
  git config core.hooksPath .githooks
  ```
