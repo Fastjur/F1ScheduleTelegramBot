@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import sqlite3
 
 import arrow
 import requests
@@ -23,6 +24,8 @@ logging.basicConfig(
 )
 
 CHECK_INTERVAL = datetime.timedelta(minutes=60)
+
+dbconn = sqlite3.connect('f1.db')
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -66,7 +69,14 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
     # Get the F1 calendar
     cal = Calendar(requests.get(ical_url).text)
 
-    chat_id = os.getenv('CHAT_ID')
+    cur = dbconn.cursor()
+    res = cur.execute("SELECT name, chat_id FROM chats WHERE name!=:name", {"name": "DEV"})
+    rows = res.fetchall()
+    if len(rows) == 0:
+        raise Exception("NON-DEV chat id does not exist in database")
+
+    chat_id = rows[0][1]
+    cur.close()
 
     utcnow = arrow.utcnow()
     for event in cal.events:
@@ -97,12 +107,21 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.info("Received schedule command from user: {}".format(update.effective_chat.id))
-    chat_id_dev = int(os.getenv('CHAT_ID_DEV'))
+
+    cur = dbconn.cursor()
+    res = cur.execute("SELECT name, chat_id FROM chats WHERE name=:name", {"name": "DEV"})
+    rows = res.fetchall()
+    if len(rows) == 0:
+        raise Exception("DEV chat id does not exist in database")
+
+    chat_id_dev = rows[0][1]
+    cur.close()
+
     logging.debug("Chat id dev: {} equals user chat_id: {}".format(
         chat_id_dev,
         update.effective_chat.id == chat_id_dev)
     )
-    if update.effective_message.chat_id != chat_id_dev:
+    if update.effective_message.chat_id != int(chat_id_dev):
         return
 
     message = "Scheduled jobs: \n"
@@ -124,6 +143,30 @@ def main():
     chat_id = os.getenv('CHAT_ID')
     if chat_id is None or len(chat_id) <= 0:
         raise Exception("No CHAT_ID in environment!")
+
+    chat_id_dev = os.getenv('CHAT_ID_DEV')
+    if chat_id_dev is None or len(chat_id_dev) <= 0:
+        raise Exception("No CHAT_ID_DEV in environment!")
+
+    cur = dbconn.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS chats(name, chat_id)")
+
+    # Check whether the DEV chatID exists within the DATABASE, if not, create it
+    res = cur.execute("SELECT name, chat_id FROM chats WHERE name=:name", {"name": "DEV"})
+    if len(res.fetchall()) == 0:
+        cur.execute("INSERT INTO chats VALUES (:name, :chat_id)",
+                    {"name": "DEV", "chat_id": chat_id_dev})
+        dbconn.commit()
+
+    # Check whether the chatID exists within the DATABASE, if not, create it
+    res = cur.execute("SELECT name, chat_id FROM chats WHERE name!=:name", {"name": "DEV"})
+    if len(res.fetchall()) == 0:
+        cur.execute("INSERT INTO chats VALUES (:name, :chat_id)",
+                    {"name": "CHAT", "chat_id": chat_id})
+        dbconn.commit()
+
+    res = cur.execute("SELECT name, chat_id FROM chats")
+    print(res.fetchall())
 
     application = ApplicationBuilder().token(bot_token).build()
 
