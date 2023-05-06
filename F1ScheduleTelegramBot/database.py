@@ -4,7 +4,7 @@ from consts import DEV_CHAT_NAME
 
 
 # Retrieves all non-dev chats from the database
-def list_chats(conn: sqlite3.connection):
+def list_chats(conn: sqlite3.Connection):
     cur = conn.cursor()
     res = cur.execute("SELECT name, chat_id FROM chats WHERE name!=:name", {"name": DEV_CHAT_NAME})
     rows = res.fetchall()
@@ -13,7 +13,7 @@ def list_chats(conn: sqlite3.connection):
 
 
 # Retrieves the dev chat from the database
-def get_chat_dev(conn: sqlite3.connection):
+def get_chat_dev(conn: sqlite3.Connection):
     cur = conn.cursor()
     res = cur.execute("SELECT name, chat_id FROM chats WHERE name=:name", {"name": DEV_CHAT_NAME})
     rows = res.fetchall()
