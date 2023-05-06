@@ -7,8 +7,9 @@ import requests
 from dotenv import load_dotenv
 from ics import Calendar
 from telegram import Update
+import telegram
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
-from consts import DEV_CHAT_NAME, CHECK_INTERVAL
+from consts import DEV_CHAT_NAME, CHECK_INTERVAL, EMOJI_CHEQUERED_FLAG, EMOJI_RED_FLAG
 import database
 
 """
@@ -29,23 +30,68 @@ dbconn = sqlite3.connect('f1.db')
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logging.info("Received start command from user: {}".format(update.effective_chat.id))
+    if update.effective_chat is None:
+        return
+
+    chat_id = update.effective_chat.id
+    logging.info("Received start command from user: {}".format(chat_id))
+
+    # For private chats, register using the username,
+    # otherwise use the group name for identification
+    name = ""
+    if update.effective_chat.type == telegram.constants.ChatType.PRIVATE:
+        name = update.effective_chat.username
+    else:
+        name = update.effective_chat.title
+
+    # disallow using the dev name to start the chat
+    if name == DEV_CHAT_NAME:
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="Hello! I am F1ScheduleTelegramBot! I am currently unable to work in "
+            "this chat, since the chat name `{}` is reserved".format(DEV_CHAT_NAME),
+        )
+
+    try:
+        database.get_chat(dbconn, chat_id)
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="Your chat has already been registered! {}{}{}".format(EMOJI_RED_FLAG,
+                                                                        EMOJI_RED_FLAG,
+                                                                        EMOJI_RED_FLAG),
+        )
+        return
+    except Exception:
+        cur = dbconn.cursor()
+        cur.execute("INSERT INTO chats VALUES (:chat_id, :type, :name)",
+                    {
+                        "chat_id": chat_id,
+                        "type": update.effective_chat.type,
+                        "name": name,
+                    })
+        dbconn.commit()
+
     await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text="Hello! I am F1ScheduleTelegramBot! I am currently mostly hardcoded, but more "
-             "features will be coming soon! Your chat id is: `{}`".format(update.effective_chat.id),
+        chat_id=chat_id,
+        text="Hello! I am F1ScheduleTelegramBot. I am currently mostly hardcoded, but more "
+             "features will be coming soon!\n\n"
+             "Your chat has been registered successfully {}".format(EMOJI_CHEQUERED_FLAG),
     )
 
 
 async def send_notifications(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
     event = job.data
-    chat_id = job.chat_id
+
     message = "{} will begin {}".format(event.name, event.begin.humanize())
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text=message,
-    )
+
+    chats = database.list_chats(dbconn)
+    for chat in chats:
+        chat_id = chat[0]
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=message,
+        )
 
 
 def remove_job_if_exists(uid: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -69,13 +115,8 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
     # Get the F1 calendar
     cal = Calendar(requests.get(ical_url).text)
 
-    chats = database.list_chats(dbconn)
-    if len(chats) != 1:
-        raise Exception("Expected only 1 non-dev chat to exist")
-
-    chat_id = chats[0][1]
-
     utcnow = arrow.utcnow()
+
     for event in cal.events:
         # First, check if the event is in the next 7 days
         if utcnow <= event.begin <= utcnow.shift(days=7):
@@ -84,21 +125,20 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
             context.job_queue.run_once(
                 send_notifications,
                 event.begin.shift(minutes=-60).datetime,
-                chat_id=chat_id,
                 name=event.uid,
                 data=event
             )
             context.job_queue.run_once(
                 send_notifications,
                 event.begin.shift(minutes=-15).datetime,
-                chat_id=chat_id,
                 name=event.uid,
                 data=event
             )
             context.job_queue.run_once(
                 send_notifications,
                 event.begin.shift(minutes=-5).datetime,
-                chat_id=chat_id, name=event.uid, data=event
+                name=event.uid,
+                data=event
             )
 
 
@@ -108,10 +148,10 @@ async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     chat_dev = database.get_chat_dev(dbconn)
 
     logging.debug("Chat id dev: {} equals user chat_id: {}".format(
-        chat_dev[1],
-        update.effective_chat.id == chat_dev[1])
+        chat_dev[0],
+        update.effective_chat.id == chat_dev[0])
     )
-    if update.effective_message.chat_id != int(chat_dev[1]):
+    if update.effective_message.chat_id != int(chat_dev[0]):
         return
 
     message = "Scheduled jobs: \n"
@@ -120,7 +160,7 @@ async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         message += "{}: {}\n".format(job.next_t.strftime("%-d %b, %H:%M:%S"), job_name)
 
     await context.bot.send_message(
-        chat_id=chat_dev[1],
+        chat_id=chat_dev[0],
         text=message,
     )
 
@@ -138,25 +178,23 @@ def main():
         raise Exception("No CHAT_ID_DEV in environment!")
 
     cur = dbconn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS chats(name, chat_id)")
+    cur.execute("""CREATE TABLE IF NOT EXISTS chats (
+                chat_id INTEGER PRIMARY KEY,
+                type TEXT NOT NULL CHECK (type <> ''),
+                name TEXT NOT NULL CHECK (name <> '')
+                )""")
 
     # Check whether the DEV chatID exists within the DATABASE, if not, create it
     try:
         database.get_chat_dev(dbconn)
     except Exception as e:
         print(e)
-        cur.execute("INSERT INTO chats VALUES (:name, :chat_id)",
-                    {"name": DEV_CHAT_NAME, "chat_id": chat_id_dev})
-        dbconn.commit()
-
-    # Check whether a chatID exists within the DATABASE, if not, create it
-    #
-    # TODO: this should be removed later, since users should be able to add
-    # the bot to the chat, which we should be able to handle without issue.
-    chats = database.list_chats(dbconn)
-    if len(chats) == 0:
-        cur.execute("INSERT INTO chats VALUES (:name, :chat_id)",
-                    {"name": "CHAT", "chat_id": chat_id})
+        cur.execute("INSERT INTO chats VALUES (:chat_id, :type, :name)",
+                    {
+                        "chat_id": chat_id_dev,
+                        "type": telegram.constants.ChatType.GROUP,
+                        "name": DEV_CHAT_NAME,
+                    })
         dbconn.commit()
 
     application = ApplicationBuilder().token(bot_token).build()
