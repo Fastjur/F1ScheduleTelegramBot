@@ -170,9 +170,6 @@ def main():
     bot_token = os.getenv('BOT_TOKEN')
     if bot_token is None or len(bot_token) <= 0:
         raise Exception("No BOT_TOKEN in environment!")
-    chat_id = os.getenv('CHAT_ID')
-    if chat_id is None or len(chat_id) <= 0:
-        raise Exception("No CHAT_ID in environment!")
     chat_id_dev = os.getenv('CHAT_ID_DEV')
     if chat_id_dev is None or len(chat_id_dev) <= 0:
         raise Exception("No CHAT_ID_DEV in environment!")
