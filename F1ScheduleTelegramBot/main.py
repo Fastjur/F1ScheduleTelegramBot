@@ -155,6 +155,29 @@ async def list_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     )
 
 
+async def list_chats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logging.info("Received chats command from user: {}".format(update.effective_chat.id))
+
+    chat_dev = database.get_chat_dev(dbconn)
+
+    logging.debug("Chat id dev: {} equals user chat_id: {}".format(
+        chat_dev[0],
+        update.effective_chat.id == chat_dev[0])
+    )
+    if update.effective_message.chat_id != int(chat_dev[0]):
+        return
+
+    message = "Registered chats: \n"
+    for chat in database.list_chats(dbconn):
+        message += "{} ({}, <code>{}</code>)\n".format(chat[2], chat[1], chat[0])
+
+    await context.bot.send_message(
+        chat_id=chat_dev[0],
+        text=message,
+        parse_mode=telegram.constants.ParseMode.HTML
+    )
+
+
 def main():
     # Read all env variables
     bot_token = os.getenv('BOT_TOKEN')
@@ -188,9 +211,11 @@ def main():
 
     start_handler = CommandHandler('start', start)
     schedule_handler = CommandHandler('schedule', list_schedule)
+    chats_handler = CommandHandler('chats', list_chats)
 
     application.add_handler(start_handler)
     application.add_handler(schedule_handler)
+    application.add_handler(chats_handler)
 
     job_queue = application.job_queue
     job_queue.run_repeating(sync_ical, interval=CHECK_INTERVAL, first=1, name="sync_ical")
