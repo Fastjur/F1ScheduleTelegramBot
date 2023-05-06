@@ -44,14 +44,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         name = update.effective_chat.title
 
-    # disallow using the dev name to start the chat
-    if name == DEV_CHAT_NAME:
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text="Hello! I am F1ScheduleTelegramBot! I am currently unable to work in "
-            "this chat, since the chat name `{}` is reserved".format(DEV_CHAT_NAME),
-        )
-
     try:
         database.get_chat(dbconn, chat_id)
         await context.bot.send_message(
