@@ -90,7 +90,7 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
             )
             context.job_queue.run_once(
                 send_notifications,
-                event.begin.shift(minutes=-1).datetime,
+                event.begin.shift(minutes=-5).datetime,
                 chat_id=chat_id, name=event.uid, data=event
             )
 
