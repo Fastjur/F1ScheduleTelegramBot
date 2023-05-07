@@ -15,13 +15,13 @@ Telegram bot to notify telegram users, groups and channels of upcoming F1 events
     ```
    or using ssh:
     ```shell
-    git clone git@github.com:Fastjur/F1ScheduleTelegramBot.git
+    git clone git@github.com:Fastjur/f1_schedule_telegram_bot.git
    ```
 
 3. Install the project dependencies using Poetry:
 
     ```shell
-    cd F1ScheduleTelegramBot
+    cd f1_schedule_telegram_bot
     poetry install
     ```
    
