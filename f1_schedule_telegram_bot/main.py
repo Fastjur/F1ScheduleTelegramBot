@@ -63,7 +63,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             dbconn.commit()
             return
-            
+
         await context.bot.send_message(
             chat_id=chat_id, text="Your chat has already been registered! 🚩🚩🚩"
         )
