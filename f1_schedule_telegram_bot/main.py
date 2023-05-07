@@ -51,18 +51,19 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "features will be coming soon!\n\n"
                 "Your chat has been registered successfully 🏁",
             )
-            return
 
-        cur = dbconn.cursor()
-        cur.execute(
-            "INSERT INTO chats VALUES (:chat_id, :type, :name)",
-            {
-                "chat_id": chat_id,
-                "type": update.effective_chat.type,
-                "name": name,
-            },
-        )
-        dbconn.commit()
+            cur = dbconn.cursor()
+            cur.execute(
+                "INSERT INTO chats VALUES (:chat_id, :type, :name)",
+                {
+                    "chat_id": chat_id,
+                    "type": update.effective_chat.type,
+                    "name": name,
+                },
+            )
+            dbconn.commit()
+            return
+            
         await context.bot.send_message(
             chat_id=chat_id, text="Your chat has already been registered! 🚩🚩🚩"
         )
