@@ -23,6 +23,9 @@ arrow = "^1.2.3"
 pylama = {extras = ["toml", "mypy", "pylint", "eradicate", "radon", "vulture"], version = "^8.4.1"}
 black = "^23.3.0"
 types-requests = "^2.30.0.0"
+# Lock pydocstyle to a version lower than 6.2, otherwise the build errors
+# https://github.com/klen/pylama/issues/232
+pydocstyle = "^6.0.0, <6.2.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -37,6 +40,8 @@ issues = "https://github.com/Fastjur/F1ScheduleTelegramBot/issues"
 [tool.pylama]
 linters = "pycodestyle,pydocstyle,pyflakes,mccabe,pylint,radon,mypy,vulture"
 ignore = "D202,D203,D212,W1203"
+# Skip .venv in github actions
+skip = ".venv/*"
 
 [tool.vulture]
 min_confidence = 70
