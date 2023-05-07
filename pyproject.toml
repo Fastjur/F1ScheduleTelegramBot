@@ -6,12 +6,12 @@ authors = ["Jurriaan Den Toonder <jurriaan@toonder.dev>"]
 license = "MIT"
 readme = "README.md"
 packages = [
-    { include = "F1ScheduleTelegramBot" },
+    { include = "f1_schedule_telegram_bot" },
 ]
 repository = "https://github.com/Fastjur/F1ScheduleTelegramBot"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.8.1"
 python-dotenv = "^1.0.0"
 python-telegram-bot = {extras = ["job-queue"], version = "^20.2"}
 requests = "^2.29.0"
@@ -20,14 +20,23 @@ arrow = "^1.2.3"
 
 
 [tool.poetry.group.dev.dependencies]
-pylama = {extras = ["toml"], version = "^8.4.1"}
+pylama = {extras = ["toml", "mypy", "pylint", "eradicate", "radon", "vulture"], version = "^8.4.1"}
+black = "^23.3.0"
+types-requests = "^2.30.0.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-main = "F1ScheduleTelegramBot.main:main"
+main = "f1_schedule_telegram_bot.main:main"
 
 [tool.poetry.urls]
 issues = "https://github.com/Fastjur/F1ScheduleTelegramBot/issues"
+
+[tool.pylama]
+linters = "pycodestyle,pydocstyle,pyflakes,mccabe,pylint,radon,mypy,vulture"
+ignore = "D202,D203,D212,W1203"
+
+[tool.vulture]
+min_confidence = 70

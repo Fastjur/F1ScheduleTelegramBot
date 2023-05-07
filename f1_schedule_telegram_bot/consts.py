@@ -1,3 +1,4 @@
+"""Constants for the bot."""
 import datetime
 
 CHECK_INTERVAL = datetime.timedelta(minutes=60)
