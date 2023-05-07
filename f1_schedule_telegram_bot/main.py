@@ -36,11 +36,11 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # For private chats, register using the username,
     # otherwise use the group name for identification
-    name = ""
+    chatName = ""
     if update.effective_chat.type == telegram.constants.ChatType.PRIVATE:
-        name = update.effective_chat.username
+        chatName = update.effective_chat.username
     else:
-        name = update.effective_chat.title
+        chatName = update.effective_chat.title
 
     try:
         chat = database.get_chat(dbconn, chat_id)
@@ -59,7 +59,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             {
                 "chat_id": chat_id,
                 "type": update.effective_chat.type,
-                "name": name,
+                "name": chatName,
             },
         )
         dbconn.commit()
