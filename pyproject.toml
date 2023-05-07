@@ -41,6 +41,8 @@ issues = "https://github.com/Fastjur/F1ScheduleTelegramBot/issues"
 # linters = "pycodestyle,pydocstyle,pyflakes,mccabe,pylint,radon,mypy,vulture"
 linters = "pycodestyle,pyflakes,mccabe,pylint,radon,mypy,vulture"
 ignore = "D202,D203,D212,W1203"
+# Skip .venv in github actions
+skip = ".venv/*"
 
 [tool.vulture]
 min_confidence = 70
