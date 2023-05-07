@@ -38,8 +38,8 @@ jobs:
       - name: Install python poetry
         run: pip install poetry
 
-      - name: Install poetry dev dependencies
-        run: poetry install --only dev
+      - name: Install poetry dependencies
+        run: poetry install
 
       - name: Run pylama
         run: poetry run pylama
