@@ -12,8 +12,6 @@ name: Create and publish a Docker image
 on:
   push:
     branches: ['main']
-  pull_request:
-    branches: ['main']
 
 env:
   REGISTRY: ghcr.io
@@ -29,21 +27,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Install python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-
-      - name: Install python poetry
-        run: pip install poetry
-
-      - name: Install poetry dependencies
-        run: poetry install
-
-      - name: Run pylama
-        run: poetry run pylama
-
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
@@ -62,6 +45,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          push: ${{ github.ref == 'refs/heads/main' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
