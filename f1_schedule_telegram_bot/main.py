@@ -118,7 +118,7 @@ async def load_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     table.field_names = ["Position", "Name", "Team", "Points"]
 
     message = f"Standing after the {races[driver_standing.round_no - 1].race_name} \n"
-    message += "DriversL \n"
+    message += "Drivers: \n"
 
     for standing in driver_standing.driver_standings:
         table.add_row(
