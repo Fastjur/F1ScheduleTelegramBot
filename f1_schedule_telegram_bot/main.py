@@ -1,5 +1,4 @@
 """Main file for the bot, which sets up all requirements and starts running the main event loop."""
-import json
 import logging
 import os
 import sqlite3
@@ -25,7 +24,6 @@ load_dotenv()
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
-
 
 dbconn = sqlite3.connect("f1.db")
 e = ergast_py.Ergast()
@@ -110,18 +108,20 @@ def remove_job_if_exists(uid: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
 
 
 async def load_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle "standings" command to show the latest standings for Drivers and Constructors."""
+
     constructor_standing = e.season().get_constructor_standing()
     driver_standing = e.season().get_driver_standing()
     races = e.season().get_races()
 
-    x = PrettyTable()
-    x.field_names = ["Position", "Name", "Team", "Points"]
+    table = PrettyTable()
+    table.field_names = ["Position", "Name", "Team", "Points"]
 
-    message = f"Standing after the {races[driver_standing.round_no-1].race_name} \n"
+    message = f"Standing after the {races[driver_standing.round_no - 1].race_name} \n"
     message += "DriversL \n"
 
     for standing in driver_standing.driver_standings:
-        x.add_row(
+        table.add_row(
             [
                 standing.position_text,
                 f"{standing.driver.given_name} {standing.driver.family_name}",
@@ -129,14 +129,14 @@ async def load_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 standing.points,
             ]
         )
-    message += x.get_string()
+    message += table.get_string()
 
-    x.clear()
-    x.field_names = ["Position", "Team", "Points", "Wins"]
+    table.clear()
+    table.field_names = ["Position", "Team", "Points", "Wins"]
 
     message += "\n Constructors: \n"
     for standing in constructor_standing.constructor_standings:
-        x.add_row(
+        table.add_row(
             [
                 standing.position_text,
                 standing.constructor.name,
@@ -144,7 +144,7 @@ async def load_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"{standing.wins} / {constructor_standing.round_no}",
             ]
         )
-    message += x.get_string()
+    message += table.get_string()
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=message,
