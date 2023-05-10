@@ -13,6 +13,7 @@ from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
 
 from f1_schedule_telegram_bot import database
 from f1_schedule_telegram_bot.consts import DEV_CHAT_NAME, CHECK_INTERVAL
+from f1_schedule_telegram_bot.message_handler import send_telegram_message
 
 # Load environment variables
 load_dotenv()
@@ -45,12 +46,12 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         chat = database.get_chat(dbconn, chat_id)
         if chat is None:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text="Hello! I am F1ScheduleTelegramBot. I am currently mostly hardcoded, but more "
-                "features will be coming soon!\n\n"
-                "Your chat has been registered successfully 🏁",
+            message = (
+                "Hello! I am F1ScheduleTelegramBot. I am currently mostly hardcoded, "
+                "but more features will be coming soon!\n\n"
+                "Your chat has been registered successfully 🏁"
             )
+            await send_telegram_message(context, chat_id, message)
 
             cur = dbconn.cursor()
             cur.execute(
@@ -64,8 +65,8 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             dbconn.commit()
             return
 
-        await context.bot.send_message(
-            chat_id=chat_id, text="Your chat has already been registered! 🚩🚩🚩"
+        await send_telegram_message(
+            context, chat_id, "Your chat has already been registered! 🚩🚩🚩"
         )
     except Exception as err:
         raise SystemExit(
@@ -87,10 +88,7 @@ async def send_notifications(context: ContextTypes.DEFAULT_TYPE):
     chats = database.list_chats(dbconn)
     for chat in chats:
         chat_id = chat.chat_id
-        await context.bot.send_message(
-            chat_id=chat_id,
-            text=message,
-        )
+        await send_telegram_message(context, chat_id, message)
 
 
 def remove_job_if_exists(uid: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
@@ -177,10 +175,7 @@ async def handle_list_schedule(
         job_name = job.data and job.data.name or job.name or "unknown job name"
         message += f"{job.next_t.strftime('%-d %b, %H:%M:%S')}: {job_name}\n"
 
-    await context.bot.send_message(
-        chat_id=chat_dev.chat_id,
-        text=message,
-    )
+    await send_telegram_message(context, chat_dev.chat_id, message)
 
 
 async def handle_list_chats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -201,9 +196,10 @@ async def handle_list_chats(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     for chat in database.list_chats(dbconn):
         message += f"{chat.name} ({chat.chat_type}, <code>{chat.chat_id}</code>)\n"
 
-    await context.bot.send_message(
-        chat_id=chat_dev.chat_id,
-        text=message,
+    await send_telegram_message(
+        context,
+        chat_dev.chat_id,
+        message,
         parse_mode=telegram.constants.ParseMode.HTML,
     )
 
