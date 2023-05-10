@@ -4,7 +4,7 @@ import os
 import sqlite3
 
 import arrow
-import ergast_py
+import ergast_py  # type: ignore
 import requests
 from dotenv import load_dotenv
 from ics import Calendar  # type: ignore
