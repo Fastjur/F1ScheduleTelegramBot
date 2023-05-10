@@ -112,11 +112,12 @@ def remove_job_if_exists(uid: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
 async def load_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     constructor_standing = e.season().get_constructor_standing()
     driver_standing = e.season().get_driver_standing()
+    races = e.season().get_races()
 
     x = PrettyTable()
     x.field_names = ["Position", "Name", "Team", "Points"]
 
-    message = f"Standing after race {driver_standing.round_no} \n"
+    message = f"Standing after the {races[driver_standing.round_no-1].race_name} \n"
     message += "DriversL \n"
 
     for standing in driver_standing.driver_standings:
