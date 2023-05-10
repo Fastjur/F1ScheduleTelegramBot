@@ -1,12 +1,15 @@
 """Main file for the bot, which sets up all requirements and starts running the main event loop."""
+import json
 import logging
 import os
 import sqlite3
 
 import arrow
+import ergast_py
 import requests
 from dotenv import load_dotenv
 from ics import Calendar  # type: ignore
+from prettytable import PrettyTable
 from telegram import Update
 import telegram
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
@@ -25,6 +28,7 @@ logging.basicConfig(
 
 
 dbconn = sqlite3.connect("f1.db")
+e = ergast_py.Ergast()
 
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -103,6 +107,47 @@ def remove_job_if_exists(uid: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
         job.schedule_removal()
 
     return True
+
+
+async def load_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    constructor_standing = e.season().get_constructor_standing()
+    driver_standing = e.season().get_driver_standing()
+
+    x = PrettyTable()
+    x.field_names = ["Position", "Name", "Team", "Points"]
+
+    message = f"Standing after race {driver_standing.round_no} \n"
+    message += "DriversL \n"
+
+    for standing in driver_standing.driver_standings:
+        x.add_row(
+            [
+                standing.position_text,
+                f"{standing.driver.given_name} {standing.driver.family_name}",
+                standing.constructors[0].name,
+                standing.points,
+            ]
+        )
+    message += x.get_string()
+
+    x.clear()
+    x.field_names = ["Position", "Team", "Points", "Wins"]
+
+    message += "\n Constructors: \n"
+    for standing in constructor_standing.constructor_standings:
+        x.add_row(
+            [
+                standing.position_text,
+                standing.constructor.name,
+                standing.points,
+                f"{standing.wins} / {constructor_standing.round_no}",
+            ]
+        )
+    message += x.get_string()
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=message,
+    )
 
 
 async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -247,10 +292,14 @@ def main():
     application = ApplicationBuilder().token(bot_token).build()
 
     start_handler = CommandHandler("start", handle_start)
+    standings_handler = CommandHandler("standings", load_standings)
+
     schedule_handler = CommandHandler("schedule", handle_list_schedule)
     chats_handler = CommandHandler("chats", handle_list_chats)
 
     application.add_handler(start_handler)
+    application.add_handler(standings_handler)
+
     application.add_handler(schedule_handler)
     application.add_handler(chats_handler)
 
