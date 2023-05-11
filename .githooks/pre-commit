@@ -1,1 +1,1 @@
-pylama
+poetry run pylama
