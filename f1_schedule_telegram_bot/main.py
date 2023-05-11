@@ -109,6 +109,9 @@ def remove_job_if_exists(uid: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
 
 async def handle_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle "standings" command to show the latest standings for Drivers and Constructors."""
+    logging.info(
+        "Received /standings command from chat_id: %s", update.effective_chat.id
+    )
 
     constructor_standing = e.season().get_constructor_standing()
     driver_standing = e.season().get_driver_standing()
@@ -118,6 +121,7 @@ async def handle_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     table.field_names = ["Position", "Name", "Team", "Points"]
 
     message = f"Standing after the {races[driver_standing.round_no - 1].race_name} \n"
+    message += "<code>\n"
     message += "Drivers: \n"
 
     for standing in driver_standing.driver_standings:
@@ -145,9 +149,11 @@ async def handle_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             ]
         )
     message += table.get_string()
+    message += "</code>"
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=message,
+        parse_mode=telegram.constants.ParseMode.HTML,
     )
 
 
