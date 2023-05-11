@@ -160,19 +160,25 @@ async def handle_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
 
 
-async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Notify channels if there is a race this week."""
+async def fetch_ical() -> Calendar:
+    """Retrieve Formula 1 events calendar."""
     try:
-        cal = Calendar(requests.get(ICAL_URL, timeout=30).text)
-    except requests.exceptions.Timeout:
-        logging.warning(
-            "Timeout of 30 seconds passed in getting ical, skipping for now"
-        )
-        return
+        return Calendar(requests.get(ICAL_URL, timeout=30).text)
+    except requests.exceptions.Timeout as err:
+        raise TimeoutError("timeout of 30s exceeded") from err
     except requests.exceptions.RequestException as err:
         raise SystemExit(
             "A request exception occurred whilst attempting to get ical"
         ) from err
+
+
+async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Notify channels if there is a race this week."""
+    try:
+        cal = await fetch_ical()
+    except requests.exceptions.Timeout as err:
+        logging.warning(f"unable to get iCal: {err}")
+        return
 
     utcnow = arrow.utcnow()
 
@@ -205,17 +211,12 @@ async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Synchronize the ical link, store all events in job queue."""
     # Get the F1 calendar
+
     try:
-        cal = Calendar(requests.get(ICAL_URL, timeout=30).text)
-    except requests.exceptions.Timeout:
-        logging.warning(
-            "Timeout of 30 seconds passed in getting ical, skipping for now"
-        )
+        cal = await fetch_ical()
+    except requests.exceptions.Timeout as err:
+        logging.warning(f"unable to get iCal: {err}")
         return
-    except requests.exceptions.RequestException as err:
-        raise SystemExit(
-            "A request exception occurred whilst attempting to get ical"
-        ) from err
 
     utcnow = arrow.utcnow()
 
