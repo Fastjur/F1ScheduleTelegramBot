@@ -1,2 +1,2 @@
 echo "===== Running Pylama ====="
-pylama
+poetry run pylama
