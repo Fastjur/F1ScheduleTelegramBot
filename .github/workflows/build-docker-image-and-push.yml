@@ -40,6 +40,12 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          # Tag the build as the latest
+          type=raw,value=latest
+          # Set the build number as the github actions run number.
+          # This number is always increasing.
+          type=raw,value=${{github.run_number}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
