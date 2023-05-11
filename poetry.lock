@@ -380,6 +380,18 @@ http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (>=1.0.0,<2.0.0)"]
 
 [[package]]
+name = "humanize"
+version = "4.6.0"
+description = "Python humanize utilities"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "humanize-4.6.0-py3-none-any.whl", hash = "sha256:401201aca462749773f02920139f302450cb548b70489b9b4b92be39fe3c3c50"},
+    {file = "humanize-4.6.0.tar.gz", hash = "sha256:5f1f22bc65911eb1a6ffe7659bd6598e33dcfeeb904eb16ee1e705a09bf75916"},
+]
+
+[[package]]
 name = "ics"
 version = "0.7.2"
 description = "Python icalendar (rfc5545) parser"
@@ -1171,4 +1183,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10.6"
-content-hash = "fa2e383c368190ceab6202e63ff19bfaa8d0cdb9bfb19bd9be9e4f1255d31a1b"
+content-hash = "dfe2ef2918f26685c52764a285babf630c08ff8ab6fe5bca62a63bf81e13d8b6"
