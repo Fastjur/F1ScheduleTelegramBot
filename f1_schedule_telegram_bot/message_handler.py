@@ -20,7 +20,7 @@ async def send_telegram_message(context, chat_id, message, *args, **kwargs):
 
     """
 
-    return context.bot.send_message(
+    return await context.bot.send_message(
         chat_id=chat_id,
         text=message,
         *args,
