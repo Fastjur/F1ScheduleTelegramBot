@@ -107,7 +107,7 @@ def remove_job_if_exists(uid: str, context: ContextTypes.DEFAULT_TYPE) -> bool:
     return True
 
 
-async def load_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def handle_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle "standings" command to show the latest standings for Drivers and Constructors."""
 
     constructor_standing = e.season().get_constructor_standing()
@@ -293,7 +293,7 @@ def main():
     application = ApplicationBuilder().token(bot_token).build()
 
     start_handler = CommandHandler("start", handle_start)
-    standings_handler = CommandHandler("standings", load_standings)
+    standings_handler = CommandHandler("standings", handle_standings)
 
     schedule_handler = CommandHandler("schedule", handle_list_schedule)
     chats_handler = CommandHandler("chats", handle_list_chats)
