@@ -188,15 +188,10 @@ async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
             next_race_name = event.name.split("(")[1].split(")")[0]
             next_race_time = datetime.datetime.fromtimestamp(event.begin.timestamp())
             next_race_natural_days = humanize.naturaltime(next_race_time)
-            next_race_natural_time = next_race_time.time()
             message = ""
             # Check if it's in 7 days
             if event.begin <= utcnow.shift(days=7):
-                message = (
-                    f"""It's rawe ceek!\n\n"""
-                    f"""{next_race_name} {next_race_natural_days} """
-                    f"""at {next_race_natural_time}"""
-                )
+                message = f"""It's rawe ceek!\n\n""" f"""{next_race_name}"""
             else:
                 message = f"{next_race_name} is {next_race_natural_days}"
 
@@ -206,6 +201,15 @@ async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
                 await send_telegram_message(context, chat_id, message)
 
             return
+
+    # Get the last race and announce offseason
+    last_race = sorted(cal.events)[-1]
+    # If the last race of the calendar was last weekend
+    if utcnow.shift(days=-7) < last_race:
+        chats = database.list_chats(dbconn)
+        for chat in chats:
+            chat_id = chat.chat_id
+            await send_telegram_message(context, chat_id, "Welcome to offseason! 🤪")
 
 
 async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -345,11 +349,8 @@ def main():
     schedule_handler = CommandHandler("schedule", handle_list_schedule)
     chats_handler = CommandHandler("chats", handle_list_chats)
 
-    application.add_handler(start_handler)
-    application.add_handler(standings_handler)
-
-    application.add_handler(schedule_handler)
-    application.add_handler(chats_handler)
+    application.add_handlers([start_handler, standings_handler])
+    application.add_handlers([schedule_handler, chats_handler])
 
     job_queue = application.job_queue
     job_queue.run_repeating(
