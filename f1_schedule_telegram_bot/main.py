@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from ics import Calendar  # type: ignore
 from prettytable import PrettyTable
 from telegram import Update
-import humanize
 import telegram
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
 
@@ -186,14 +185,12 @@ async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
         # Get the first grand prix in the calendar
         if utcnow < event.begin and "F1: Grand Prix" in event.name:
             next_race_name = event.name.split("(")[1].split(")")[0]
-            next_race_time = datetime.datetime.fromtimestamp(event.begin.timestamp())
-            next_race_natural_days = humanize.naturaltime(next_race_time)
             message = ""
             # Check if it's in 7 days
             if event.begin <= utcnow.shift(days=7):
                 message = f"""It's rawe ceek!\n\n""" f"""{next_race_name}"""
             else:
-                message = f"{next_race_name} is {next_race_natural_days}"
+                message = f"{next_race_name} is {event.begin.humanize()}"
 
             chats = database.list_chats(dbconn)
             for chat in chats:
@@ -357,6 +354,7 @@ def main():
         sync_ical, interval=CHECK_INTERVAL, first=1, name="sync_ical"
     )
 
+    job_queue.run_once(check_rawe_ceek, when=datetime.timedelta(seconds=1))
     job_queue.run_daily(
         check_rawe_ceek,
         time=datetime.time(
