@@ -1,10 +1,12 @@
 """Main file for the bot, which sets up all requirements and starts running the main event loop."""
+import datetime
 import logging
 import os
 import sqlite3
 
 import arrow
 import ergast_py  # type: ignore
+import pytz  # type: ignore
 import requests
 from dotenv import load_dotenv
 from ics import Calendar  # type: ignore
@@ -14,7 +16,7 @@ import telegram
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
 
 from f1_schedule_telegram_bot import database
-from f1_schedule_telegram_bot.consts import DEV_CHAT_NAME, CHECK_INTERVAL
+from f1_schedule_telegram_bot.consts import DEV_CHAT_NAME, CHECK_INTERVAL, ICAL_URL
 from f1_schedule_telegram_bot.message_handler import send_telegram_message
 
 # Load environment variables
@@ -157,25 +159,65 @@ async def handle_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     )
 
 
-async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Synchronize the ical link, store all events in job queue."""
-    ical_url = (
-        "https://files-f1.motorsportcalendars.com/f1"
-        "-calendar_p1_p2_p3_qualifying_sprint_gp.ics"
-    )
-
-    # Get the F1 calendar
+async def fetch_ical() -> Calendar:
+    """Retrieve Formula 1 events calendar."""
     try:
-        cal = Calendar(requests.get(ical_url, timeout=30).text)
-    except requests.exceptions.Timeout:
-        logging.warning(
-            "Timeout of 30 seconds passed in getting ical, skipping for now"
-        )
-        return
+        return Calendar(requests.get(ICAL_URL, timeout=30).text)
+    except requests.exceptions.Timeout as err:
+        raise TimeoutError("timeout of 30s exceeded") from err
     except requests.exceptions.RequestException as err:
         raise SystemExit(
             "A request exception occurred whilst attempting to get ical"
         ) from err
+
+
+async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Notify channels if there is a race this week."""
+    try:
+        cal = await fetch_ical()
+    except requests.exceptions.Timeout as err:
+        logging.warning(f"unable to get iCal: {err}")
+        return
+
+    utcnow = arrow.utcnow()
+
+    for event in cal.events:
+        # Get the first grand prix in the calendar
+        if utcnow < event.begin and "F1: Grand Prix" in event.name:
+            next_race_name = event.name.split("(")[1].split(")")[0]
+            message = ""
+            # Check if it's in 7 days
+            if event.begin <= utcnow.shift(days=7):
+                message = f"""It's rawe ceek!\n\n""" f"""{next_race_name}"""
+            else:
+                message = f"{next_race_name} is {event.begin.humanize()}"
+
+            chats = database.list_chats(dbconn)
+            for chat in chats:
+                chat_id = chat.chat_id
+                await send_telegram_message(context, chat_id, message)
+
+            return
+
+    # Get the last race and announce offseason
+    last_race = sorted(cal.events)[-1]
+    # If the last race of the calendar was last weekend
+    if utcnow.shift(days=-7) < last_race:
+        chats = database.list_chats(dbconn)
+        for chat in chats:
+            chat_id = chat.chat_id
+            await send_telegram_message(context, chat_id, "Welcome to offseason! 🤪")
+
+
+async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Synchronize the ical link, store all events in job queue."""
+    # Get the F1 calendar
+
+    try:
+        cal = await fetch_ical()
+    except requests.exceptions.Timeout as err:
+        logging.warning(f"unable to get iCal: {err}")
+        return
 
     utcnow = arrow.utcnow()
 
@@ -304,15 +346,25 @@ def main():
     schedule_handler = CommandHandler("schedule", handle_list_schedule)
     chats_handler = CommandHandler("chats", handle_list_chats)
 
-    application.add_handler(start_handler)
-    application.add_handler(standings_handler)
-
-    application.add_handler(schedule_handler)
-    application.add_handler(chats_handler)
+    application.add_handlers([start_handler, standings_handler, schedule_handler, chats_handler])
 
     job_queue = application.job_queue
     job_queue.run_repeating(
         sync_ical, interval=CHECK_INTERVAL, first=1, name="sync_ical"
+    )
+
+    job_queue.run_once(check_rawe_ceek, when=datetime.timedelta(seconds=1))
+    job_queue.run_daily(
+        check_rawe_ceek,
+        time=datetime.time(
+            hour=10,
+            minute=0,
+            second=0,
+            microsecond=0,
+            tzinfo=pytz.timezone("Europe/Amsterdam"),
+        ),
+        days=(1,),
+        name="check_rawe_ceek",
     )
 
     application.run_polling()
