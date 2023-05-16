@@ -346,8 +346,7 @@ def main():
     schedule_handler = CommandHandler("schedule", handle_list_schedule)
     chats_handler = CommandHandler("chats", handle_list_chats)
 
-    application.add_handlers([start_handler, standings_handler])
-    application.add_handlers([schedule_handler, chats_handler])
+    application.add_handlers([start_handler, standings_handler, schedule_handler, chats_handler])
 
     job_queue = application.job_queue
     job_queue.run_repeating(
