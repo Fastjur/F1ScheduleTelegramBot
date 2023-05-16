@@ -353,7 +353,6 @@ def main():
         sync_ical, interval=CHECK_INTERVAL, first=1, name="sync_ical"
     )
 
-    job_queue.run_once(check_rawe_ceek, when=datetime.timedelta(seconds=1))
     job_queue.run_daily(
         check_rawe_ceek,
         time=datetime.time(
