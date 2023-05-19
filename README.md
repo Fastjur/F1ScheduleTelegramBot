@@ -47,14 +47,6 @@ If you want to use the git hooks, you need to configure the githooks directory f
  ```
 
 This will enable all the hooks in the `.githooks` directory.
-Ensure that you have activated the virtual environment before committing, otherwise the hooks will not work.
-You can activate the virtual environment using the following command:
-
-```shell
-poetry shell
-```
-
-Alternatively, in some IDEs you can configure the virtual environment to be activated automatically when opening the project.
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
