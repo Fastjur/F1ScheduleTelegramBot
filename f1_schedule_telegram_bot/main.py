@@ -222,6 +222,9 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
     utcnow = arrow.utcnow()
 
     for event in cal.events:
+        # If the event is cancelled, don't add a job for it.
+        if "canceled" in event.name.lower():
+            continue
         # First, check if the event is in the next 7 days
         if utcnow <= event.begin <= utcnow.shift(days=7):
             # For now reschedule all events
