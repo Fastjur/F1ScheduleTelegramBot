@@ -15,13 +15,13 @@ Telegram bot to notify telegram users, groups and channels of upcoming F1 events
     ```
    or using ssh:
     ```shell
-    git clone git@github.com:Fastjur/f1_schedule_telegram_bot.git
+    git clone git@github.com:Fastjur/F1ScheduleTelegramBot.git
    ```
 
 3. Install the project dependencies using Poetry:
 
     ```shell
-    cd f1_schedule_telegram_bot
+    cd F1ScheduleTelegramBot
     poetry install
     ```
    
@@ -40,13 +40,7 @@ poetry run main
 This will run the main script, which will start the bot.
 
 ## Contributing
-If you want to use the git hooks, you need to install pylama first:
-
-``` shell
-pip install pylama
-```
-
-After that you can enable the githooks using the following command:
+If you want to use the git hooks, you need to configure the githooks directory first, using the following command:
 
  ```shell
  git config core.hooksPath .githooks
