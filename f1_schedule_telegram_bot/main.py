@@ -237,12 +237,6 @@ async def sync_ical(context: ContextTypes.DEFAULT_TYPE) -> None:
             )
             context.job_queue.run_once(
                 send_notifications,
-                event.begin.shift(minutes=-15).datetime,
-                name=event.uid,
-                data=event,
-            )
-            context.job_queue.run_once(
-                send_notifications,
                 event.begin.shift(minutes=-5).datetime,
                 name=event.uid,
                 data=event,
