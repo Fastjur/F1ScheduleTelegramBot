@@ -171,6 +171,51 @@ async def fetch_ical() -> Calendar:
         ) from err
 
 
+async def send_weekend_calendar(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send a message with the calendar for the current weekend."""
+    try:
+        cal = await fetch_ical()
+    except requests.exceptions.Timeout as err:
+        logging.warning(f"unable to get iCal: {err}")
+        return
+
+    # Order the events such that the quali is listed before the race
+    events = sorted(cal.events)
+    utcnow = arrow.utcnow().shift(days=-3)
+    message = ""
+
+    for event in events:
+        # Get the quali and race for this weekend
+        if (
+            utcnow < event.begin
+            and event.begin <= utcnow.shift(days=4)
+            and ("F1: Qualifying" in event.name or "F1: Grand Prix" in event.name)
+        ):
+            race_name = event.name.split("(")[1].split(")")[0]
+            event_name = event.name.split("F1:")[1].split("(")[0].strip()
+
+            # If message is empty, start with the name of the race
+            if message == "":
+                message += f"<b>{race_name}</b>\n"
+
+            message += f"{event_name}: {event.begin.format('HH:mm')}\n"
+
+    if message == "":
+        return
+
+    chats = database.list_chats(dbconn)
+    for chat in chats:
+        chat_id = chat.chat_id
+        await send_telegram_message(
+            context,
+            chat_id,
+            message,
+            parse_mode=telegram.constants.ParseMode.HTML,
+        )
+
+    return
+
+
 async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Notify channels if there is a race this week."""
     try:
@@ -361,6 +406,19 @@ def main():
         ),
         days=(1,),
         name="check_rawe_ceek",
+    )
+
+    job_queue.run_daily(
+        send_weekend_calendar,
+        time=datetime.time(
+            hour=20,
+            minute=0,
+            second=0,
+            microsecond=0,
+            tzinfo=pytz.timezone("Europe/Amsterdam"),
+        ),
+        days=(4,),
+        name="send_weekend_calendar",
     )
 
     application.run_polling()
