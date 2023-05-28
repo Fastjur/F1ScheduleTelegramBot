@@ -16,6 +16,7 @@ import telegram
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
 
 from f1_schedule_telegram_bot import database
+from f1_schedule_telegram_bot import helpers
 from f1_schedule_telegram_bot.consts import DEV_CHAT_NAME, CHECK_INTERVAL, ICAL_URL
 from f1_schedule_telegram_bot.message_handler import send_telegram_message
 
@@ -189,7 +190,7 @@ async def send_weekend_calendar(context: ContextTypes.DEFAULT_TYPE) -> None:
         if (
             utcnow < event.begin
             and event.begin <= utcnow.shift(days=4)
-            and ("F1: Qualifying" in event.name or "F1: Grand Prix" in event.name)
+            and (helpers.is_race(event.name) or helpers.is_qualifying(event.name))
         ):
             race_name = event.name.split("(")[1].split(")")[0]
             event_name = event.name.split("F1:")[1].split("(")[0].strip()
@@ -228,7 +229,7 @@ async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
 
     for event in cal.events:
         # Get the first grand prix in the calendar
-        if utcnow < event.begin and "F1: Grand Prix" in event.name:
+        if utcnow < event.begin and helpers.is_race(event.name):
             next_race_name = event.name.split("(")[1].split(")")[0]
             message = ""
             # Check if it's in 7 days
