@@ -181,7 +181,7 @@ async def send_weekend_calendar(context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Order the events such that the quali is listed before the race
     events = sorted(cal.events)
-    utcnow = arrow.utcnow().shift(days=-3)
+    utcnow = arrow.utcnow()
     message = ""
 
     for event in events:
