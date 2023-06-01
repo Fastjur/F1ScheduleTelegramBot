@@ -28,7 +28,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 
-dbconn = sqlite3.connect("f1.db")
+dbconn = sqlite3.connect("./data/f1.db")
 e = ergast_py.Ergast()
 
 
