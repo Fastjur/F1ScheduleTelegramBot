@@ -16,4 +16,5 @@ FROM python as runtime
 ENV PATH="/app/.venv/bin:$PATH"
 COPY --from=poetry /app /app
 WORKDIR /app
+RUN ["mkdir", "-p", "data"]
 ENTRYPOINT ["python", "f1_schedule_telegram_bot/main.py"]
