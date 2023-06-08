@@ -10,7 +10,6 @@ import pytz  # type: ignore
 import requests
 from dotenv import load_dotenv
 from ics import Calendar  # type: ignore
-from prettytable import PrettyTable
 from telegram import Update
 import telegram
 from telegram.ext import ContextTypes, ApplicationBuilder, CommandHandler
@@ -19,6 +18,8 @@ from f1_schedule_telegram_bot import database
 from f1_schedule_telegram_bot import helpers
 from f1_schedule_telegram_bot.consts import DEV_CHAT_NAME, CHECK_INTERVAL, ICAL_URL
 from f1_schedule_telegram_bot.message_handler import send_telegram_message
+from f1_schedule_telegram_bot.draw_standings import draw_driver_standings
+from f1_schedule_telegram_bot.draw_standings import draw_constructor_standings
 
 # Load environment variables
 load_dotenv()
@@ -120,43 +121,16 @@ async def handle_standings(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     driver_standing = e.season().get_driver_standing()
     races = e.season().get_races()
 
-    table = PrettyTable()
-    table.field_names = ["Position", "Name", "Team", "Points"]
-
-    message = f"Standing after the {races[driver_standing.round_no - 1].race_name} \n"
-    message += "<code>\n"
-    message += "Drivers: \n"
-
-    for standing in driver_standing.driver_standings:
-        table.add_row(
-            [
-                standing.position_text,
-                f"{standing.driver.given_name} {standing.driver.family_name}",
-                standing.constructors[0].name,
-                standing.points,
-            ]
-        )
-    message += table.get_string()
-
-    table.clear()
-    table.field_names = ["Position", "Team", "Points", "Wins"]
-
-    message += "\n Constructors: \n"
-    for standing in constructor_standing.constructor_standings:
-        table.add_row(
-            [
-                standing.position_text,
-                standing.constructor.name,
-                standing.points,
-                f"{standing.wins} / {constructor_standing.round_no}",
-            ]
-        )
-    message += table.get_string()
-    message += "</code>"
-    await context.bot.send_message(
+    driver_standing_image = draw_driver_standings(driver_standing, races)
+    await context.bot.send_photo(
         chat_id=update.effective_chat.id,
-        text=message,
-        parse_mode=telegram.constants.ParseMode.HTML,
+        photo=driver_standing_image,
+    )
+
+    constructor_standing_image = draw_constructor_standings(constructor_standing, races)
+    await context.bot.send_photo(
+        chat_id=update.effective_chat.id,
+        photo=constructor_standing_image,
     )
 
 
