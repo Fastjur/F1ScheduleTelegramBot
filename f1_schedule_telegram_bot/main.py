@@ -146,7 +146,7 @@ async def fetch_ical() -> Calendar:
         ) from err
 
 
-async def send_weekend_calendar(context: ContextTypes.DEFAULT_TYPE) -> None:
+async def send_weekend_calendar(context: ContextTypes.DEFAULT_TYPE, *args) -> None:
     """Send a message with the calendar for the current weekend."""
     try:
         cal = await fetch_ical()
