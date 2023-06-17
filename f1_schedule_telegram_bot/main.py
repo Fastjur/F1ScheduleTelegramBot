@@ -366,8 +366,7 @@ def main():
         start_handler,
         standings_handler,
         schedule_handler,
-        chats_handler,
-        weekend_calendar_handler
+        chats_handler
     ])
 
     job_queue = application.job_queue
