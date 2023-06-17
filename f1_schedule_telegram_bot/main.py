@@ -146,7 +146,7 @@ async def fetch_ical() -> Calendar:
         ) from err
 
 
-async def send_weekend_calendar(context: ContextTypes.DEFAULT_TYPE, *args) -> None:
+async def send_weekend_calendar(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message with the calendar for the current weekend."""
     try:
         cal = await fetch_ical()
@@ -361,7 +361,6 @@ def main():
     standings_handler = CommandHandler("standings", handle_standings)
     schedule_handler = CommandHandler("schedule", handle_list_schedule)
     chats_handler = CommandHandler("chats", handle_list_chats)
-    weekend_calendar_handler = CommandHandler("weekend", send_weekend_calendar)
 
     application.add_handlers([
         start_handler,
