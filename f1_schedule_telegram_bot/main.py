@@ -201,7 +201,9 @@ async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
 
     utcnow = arrow.utcnow()
 
-    for event in cal.events:
+    sorted_events = sorted(cal.events)
+
+    for event in sorted_events:
         # Get the first grand prix in the calendar
         if utcnow < event.begin and helpers.is_race(event.name):
             next_race_name = event.name.split("(")[1].split(")")[0]
@@ -220,7 +222,7 @@ async def check_rawe_ceek(context: ContextTypes.DEFAULT_TYPE) -> None:
             return
 
     # Get the last race and announce offseason
-    last_race = sorted(cal.events)[-1]
+    last_race = sorted_events[-1]
     # If the last race of the calendar was last weekend
     if utcnow.shift(days=-7) < last_race:
         chats = database.list_chats(dbconn)
@@ -362,12 +364,9 @@ def main():
     schedule_handler = CommandHandler("schedule", handle_list_schedule)
     chats_handler = CommandHandler("chats", handle_list_chats)
 
-    application.add_handlers([
-        start_handler,
-        standings_handler,
-        schedule_handler,
-        chats_handler
-    ])
+    application.add_handlers(
+        [start_handler, standings_handler, schedule_handler, chats_handler]
+    )
 
     job_queue = application.job_queue
     job_queue.run_repeating(
