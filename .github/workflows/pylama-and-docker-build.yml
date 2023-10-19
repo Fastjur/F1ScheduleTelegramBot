@@ -48,6 +48,10 @@ jobs:
 
       - name: Run pylama
         run: poetry run pylama
+
+      - name: Run pytests
+        working-directory: tests
+        run: poetry run pytest
   verify-docker-image:
     runs-on: ubuntu-latest
     permissions:
