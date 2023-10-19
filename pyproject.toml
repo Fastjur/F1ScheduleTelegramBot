@@ -30,6 +30,8 @@ types-requests = "^2.30.0.0"
 # https://github.com/klen/pylama/issues/232
 pydocstyle = "^6.0.0, <6.2.0"
 isort = "^5.12.0"
+pytest = "^7.4.2"
+pytest-asyncio = "^0.21.1"
 
 [build-system]
 requires = ["poetry-core"]
