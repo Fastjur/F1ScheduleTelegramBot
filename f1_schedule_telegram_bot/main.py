@@ -17,6 +17,7 @@ from f1_schedule_telegram_bot import database, helpers
 from f1_schedule_telegram_bot.consts import (
     CHECK_INTERVAL,
     DEV_CHAT_NAME,
+    TIMEZONE,
 )
 from f1_schedule_telegram_bot.draw_standings import (
     draw_constructor_standings,
@@ -209,7 +210,9 @@ class F1ScheduleTelegramBot:
         job = context.job
         event = job.data
 
-        message = f"{event.name} will begin {event.begin.humanize()}"
+        message = (
+            f"{event.name} will begin {event.begin.to(TIMEZONE).humanize()}"
+        )
 
         chats = database.list_chats(self._dbconn)
         for chat in chats:
@@ -294,7 +297,7 @@ class F1ScheduleTelegramBot:
                 if message == "":
                     message += f"<b>{race_name}</b>\n"
 
-                message += f"{event_name}: {event.begin.format('HH:mm')}\n"
+                message += f"{event_name}: {event.begin.to(TIMEZONE).format('HH:mm')}\n"
 
         if message == "":
             return
@@ -335,7 +338,7 @@ class F1ScheduleTelegramBot:
                         f"""It's rawe ceek!\n\n""" f"""{next_race_name}"""
                     )
                 else:
-                    message = f"{next_race_name} is {event.begin.humanize()}"
+                    message = f"{next_race_name} is {event.begin.to(TIMEZONE).humanize()}"
 
                 chats = database.list_chats(self._dbconn)
                 for chat in chats:
