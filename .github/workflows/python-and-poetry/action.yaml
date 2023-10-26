@@ -1,0 +1,32 @@
+name: "Install python and poetry dependencies"
+description: "Install python and poetry dependencies using a cache based on the lock file"
+runs:
+  using: "composite"
+  steps:
+    - name: Install python
+      id: setup-python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Install python poetry
+      shell: bash
+      run: pip install poetry
+
+    - name: Configure poetry venv location
+      shell: bash
+      run: |
+        poetry config virtualenvs.in-project true
+        ls -al
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install poetry dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      shell: bash
+      run: poetry install --no-interaction
