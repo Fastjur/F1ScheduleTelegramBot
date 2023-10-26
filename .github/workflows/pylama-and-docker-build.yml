@@ -21,33 +21,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install python
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install python poetry
-        run: pip install poetry
-
-      - name: Configure poetry venv location
-        run: |
-          poetry config virtualenvs.in-project true
-          ls -al
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-      - name: Install poetry dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction
+      - name: Install python and poetry dependencies
+        uses: ./python-and-poetry/action.yaml
 
       - name: Run pylama
         run: poetry run pylama
+  pytest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install python and poetry dependencies
+        uses: ./python-and-poetry/action.yaml
 
       - name: Run pytests
         working-directory: tests

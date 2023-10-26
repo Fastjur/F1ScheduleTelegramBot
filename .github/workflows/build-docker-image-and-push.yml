@@ -28,6 +28,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install python and poetry dependencies
+        uses: ./python-and-poetry/action.yaml
+
+      - name: Run pytests
+        working-directory: tests
+        run: poetry run pytest
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
