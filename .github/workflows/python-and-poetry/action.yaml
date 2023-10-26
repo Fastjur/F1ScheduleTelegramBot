@@ -10,9 +10,11 @@ runs:
         python-version: "3.10"
 
     - name: Install python poetry
+      shell: bash
       run: pip install poetry
 
     - name: Configure poetry venv location
+      shell: bash
       run: |
         poetry config virtualenvs.in-project true
         ls -al
@@ -26,4 +28,5 @@ runs:
 
     - name: Install poetry dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      shell: bash
       run: poetry install --no-interaction
