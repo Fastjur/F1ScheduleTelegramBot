@@ -24,7 +24,7 @@ pillow = "^10.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pylama = {extras = ["toml", "mypy", "pylint", "eradicate", "radon", "vulture"], version = "^8.4.1"}
-black = "^23.3.0"
+black = "^24.3.0"
 types-requests = "^2.30.0.0"
 # Lock pydocstyle to a version lower than 6.2, otherwise the build errors
 # https://github.com/klen/pylama/issues/232
